@@ -2,10 +2,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 
 const GPT_MODEL = "gpt-3.5-turbo";
-const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "digital";
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN!;
-const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID!;
+const VERIFY_TOKEN = "digital";
+const OPENAI_API_KEY = "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";
+const WHATSAPP_TOKEN = "EAAJmzvNnx3gBAA1ny8WaAbzZA5ZBozDmmrxXJAhFMKllyM8ZCGsD6XcqUZAHq4XxAZAlqwRE6gmH0FM5AwIvEwrMjblwl0epTfL4oZCgCOHKFGYkUEiT83vQlGZAfq0RcfqUHaBrNPbZCF78PYFv9rrD7zJPBLah5G1bykl9HfNdOtvn7XoUgsY1Qyn60eQgtdcZD";
+const WHATSAPP_PHONE_ID = "716952258170209";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
