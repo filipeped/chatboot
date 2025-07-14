@@ -23,7 +23,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === "POST") {
     const entry = req.body.entry?.[0];
     const changes = entry?.changes?.[0];
-    const message = changes?.value?.messages?.[0];
+
+    if (!changes?.value?.messages) return res.sendStatus(200);
+
+    const message = changes.value.messages[0];
     const sender = message?.from;
     const text = message?.text?.body;
 
@@ -47,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const resposta = gptRes.data.choices?.[0]?.message?.content;
 
       await axios.post(
-        `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_ID}/messages`,
+        `https://graph.facebook.com/v19.0/${WHATSAPP_PHONE_ID}/messages`,
         {
           messaging_product: "whatsapp",
           to: sender,
