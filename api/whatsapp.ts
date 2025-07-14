@@ -31,14 +31,14 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
       
       if (!message) {
-        return res.sendStatus(200); // Não é uma mensagem, apenas um status do WhatsApp
+        return res.status(200).send('OK'); // Não é uma mensagem, apenas um status do WhatsApp
       }
 
       const sender = message.from;
       const text = message.text?.body;
 
       if (!sender || !text) {
-        return res.sendStatus(200); // Ignora se não houver texto
+        return res.status(200).send('OK'); // Ignora se não houver texto
       }
 
       // 3. Chamada para a API da OpenAI
@@ -60,7 +60,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
       if (!resposta) {
         console.error("A OpenAI não retornou uma resposta.");
-        return res.sendStatus(200);
+        return res.status(200).send('OK');
       }
 
       // 4. Envio da resposta via API do WhatsApp
@@ -80,7 +80,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
         }
        );
 
-      return res.sendStatus(200);
+      return res.status(200).send('OK');
     } catch (e: any) {
       console.error("Erro no processamento da mensagem:", e.response?.data || e.message);
       return res.status(500).send("Erro interno no servidor");
