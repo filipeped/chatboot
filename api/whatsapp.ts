@@ -1,59 +1,71 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from "next";
+import axios from "axios";
+
+const OPENAI_API_KEY = "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";
+const WHATSAPP_TOKEN = "EAAJmzvNnx3gBAA1ny8WaAbzZA5ZBozDmmrxXJAhFMKllyM8ZCGsD6XcqUZAHq4XxAZAlqwRE6gmH0FM5AwIvEwrMjblwl0epTfL4oZCgCOHKFGYkUEiT83vQlGZAfq0RcfqUHaBrNPbZCF78PYFv9rrD7zJPBLah5G1bykl9HfNdOtvn7XoUgsY1Qyn60eQgtdcZD";
+const WHATSAPP_PHONE_ID = "716952258170209";
+const GPT_MODEL = "gpt-3.5-turbo";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // ✅ Verificação do Webhook (GET)
   if (req.method === "GET") {
-    const VERIFY_TOKEN = "chatboot";
+    const VERIFY_TOKEN = "digital";
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
 
-    if (mode === "subscribe" && token === VERIFY_TOKEN) {
-      return res.status(200).send(challenge);
+    if (mode && token && mode === "subscribe" && token === VERIFY_TOKEN) {
+      res.status(200).send(challenge);
     } else {
-      return res.status(403).send("Token inválido");
+      res.sendStatus(403);
     }
   }
 
-  // ✅ Mensagem recebida (POST)
   if (req.method === "POST") {
-    const { messages } = req.body.entry?.[0]?.changes?.[0]?.value || {};
-    const msg = messages?.[0]?.text?.body;
-    const from = messages?.[0]?.from;
+    const entry = req.body.entry?.[0];
+    const changes = entry?.changes?.[0];
+    const message = changes?.value?.messages?.[0];
+    const sender = message?.from;
+    const text = message?.text?.body;
 
-    if (!msg || !from) return res.status(200).end("No message");
+    if (!sender || !text) return res.sendStatus(200);
 
-    const gptRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4",
-        messages: [{ role: "user", content: msg }]
-      })
-    });
+    try {
+      const gptRes = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          model: GPT_MODEL,
+          messages: [{ role: "user", content: text }],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+          },
+        }
+      );
 
-    const gptData = await gptRes.json();
-    const reply = gptData.choices?.[0]?.message?.content || "Não consegui entender. Pode repetir?";
+      const resposta = gptRes.data.choices?.[0]?.message?.content;
 
-    await fetch(`https://graph.facebook.com/v19.0/${process.env.META_PHONE_NUMBER_ID}/messages`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.META_ACCESS_TOKEN}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: from,
-        text: { body: reply }
-      })
-    });
+      await axios.post(
+        `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_ID}/messages`,
+        {
+          messaging_product: "whatsapp",
+          to: sender,
+          type: "text",
+          text: { body: resposta },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    return res.status(200).end("Mensagem enviada");
+      res.sendStatus(200);
+    } catch (err) {
+      console.error(err);
+      res.sendStatus(500);
+    }
   }
-
-  // Outros métodos não permitidos
-  return res.status(405).send("Method Not Allowed");
 }
