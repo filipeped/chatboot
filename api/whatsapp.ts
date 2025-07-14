@@ -1,15 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import axios from 'axios';
 
-// ATENÇÃO: Mova estas chaves para Variáveis de Ambiente na Vercel!
+// As chaves de API são lidas das Variáveis de Ambiente da Vercel
 const GPT_MODEL = "gpt-3.5-turbo";
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
-const VERIFY_TOKEN = process.env.VERIFY_TOKEN; // Este é o seu "digital"
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 
+// A função principal que a Vercel irá executar
 export default async (req: VercelRequest, res: VercelResponse) => {
-  // Configuração do Webhook do WhatsApp (GET)
+  // 1. Configuração do Webhook do WhatsApp (só acontece uma vez)
   if (req.method === "GET") {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
@@ -24,25 +25,23 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     }
   }
 
-  // Recebendo mensagens do WhatsApp (POST)
+  // 2. Recebendo e respondendo mensagens (acontece a cada mensagem recebida)
   if (req.method === "POST") {
     try {
       const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
       
-      // Se não for uma mensagem válida, ignora.
       if (!message) {
-        return res.sendStatus(200);
+        return res.sendStatus(200); // Não é uma mensagem, apenas um status do WhatsApp
       }
 
       const sender = message.from;
       const text = message.text?.body;
 
-      // Se não houver texto na mensagem, ignora.
       if (!sender || !text) {
-        return res.sendStatus(200);
+        return res.sendStatus(200); // Ignora se não houver texto
       }
 
-      // Chamada para a API da OpenAI
+      // 3. Chamada para a API da OpenAI
       const gptResponse = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
@@ -61,10 +60,10 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
       if (!resposta) {
         console.error("A OpenAI não retornou uma resposta.");
-        return res.sendStatus(200); // Não trava o fluxo se a API falhar
+        return res.sendStatus(200);
       }
 
-      // Envio da resposta via API do WhatsApp
+      // 4. Envio da resposta via API do WhatsApp
       await axios.post(
         `https://graph.facebook.com/v19.0/${WHATSAPP_PHONE_ID}/messages`,
         {
@@ -83,7 +82,6 @@ export default async (req: VercelRequest, res: VercelResponse) => {
 
       return res.sendStatus(200);
     } catch (e: any) {
-      // Usar 'any' ou 'unknown' para o erro e depois verificar
       console.error("Erro no processamento da mensagem:", e.response?.data || e.message);
       return res.status(500).send("Erro interno no servidor");
     }
