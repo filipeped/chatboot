@@ -5,18 +5,18 @@ const OPENAI_API_KEY = "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";
 const WHATSAPP_TOKEN = "EAAJmzvNnx3gBAA1ny8WaAbzZA5ZBozDmmrxXJAhFMKllyM8ZCGsD6XcqUZAHq4XxAZAlqwRE6gmH0FM5AwIvEwrMjblwl0epTfL4oZCgCOHKFGYkUEiT83vQlGZAfq0RcfqUHaBrNPbZCF78PYFv9rrD7zJPBLah5G1bykl9HfNdOtvn7XoUgsY1Qyn60eQgtdcZD";
 const WHATSAPP_PHONE_ID = "716952258170209";
 const GPT_MODEL = "gpt-3.5-turbo";
+const VERIFY_TOKEN = "digital";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
-    const VERIFY_TOKEN = "digital";
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
 
-    if (mode && token && mode === "subscribe" && token === VERIFY_TOKEN) {
-      res.status(200).send(challenge);
+    if (mode === "subscribe" && token === VERIFY_TOKEN) {
+      return res.status(200).send(challenge);
     } else {
-      res.sendStatus(403);
+      return res.sendStatus(403);
     }
   }
 
@@ -62,10 +62,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       );
 
-      res.sendStatus(200);
+      return res.sendStatus(200);
     } catch (err) {
       console.error(err);
-      res.sendStatus(500);
+      return res.sendStatus(500);
     }
   }
+
+  return res.sendStatus(405);
 }
