@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 
-const OPENAI_API_KEY = "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";
-const WHATSAPP_TOKEN = "EAAJmzvNnx3gBAA1ny8WaAbzZA5ZBozDmmrxXJAhFMKllyM8ZCGsD6XcqUZAHq4XxAZAlqwRE6gmH0FM5AwIvEwrMjblwl0epTfL4oZCgCOHKFGYkUEiT83vQlGZAfq0RcfqUHaBrNPbZCF78PYFv9rrD7zJPBLah5G1bykl9HfNdOtvn7XoUgsY1Qyn60eQgtdcZD";
-const WHATSAPP_PHONE_ID = "716952258170209";
 const GPT_MODEL = "gpt-3.5-turbo";
-const VERIFY_TOKEN = "digital";
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "digital";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
+const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN!;
+const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID!;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (mode === "subscribe" && token === VERIFY_TOKEN) {
       return res.status(200).send(challenge);
     } else {
-      return res.sendStatus(403);
+      return res.status(403).send("Invalid verify token");
     }
   }
 
@@ -66,11 +66,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       );
 
       return res.sendStatus(200);
-    } catch (err) {
-      console.error(err);
-      return res.sendStatus(500);
+    } catch (error) {
+      console.error("Erro ao processar mensagem:", error);
+      return res.status(500).send("Erro interno no servidor");
     }
   }
 
-  return res.sendStatus(405);
+  return res.status(405).send("Método não permitido");
 }
