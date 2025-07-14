@@ -1,5 +1,4 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import axios from "axios";
+const axios = require("axios");
 
 const GPT_MODEL = "gpt-3.5-turbo";
 const OPENAI_API_KEY = "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";
@@ -7,7 +6,7 @@ const WHATSAPP_TOKEN = "EAAJmzvNnx3gBAA1ny8WaAbzZA5ZBozDmmrxXJAhFMKllyM8ZCGsD6Xc
 const WHATSAPP_PHONE_ID = "716952258170209";
 const VERIFY_TOKEN = "digital";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+module.exports = async (req, res) => {
   if (req.method === "GET") {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
@@ -25,7 +24,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
       const sender = message?.from;
       const text = message?.text?.body;
-
       if (!sender || !text) return res.sendStatus(200);
 
       const gpt = await axios.post(
@@ -42,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       );
 
-      const resposta = gpt.data.choices?.[0]?.message?.content || "Desculpe, não entendi.";
+      const resposta = gpt.data.choices?.[0]?.message?.content;
 
       await axios.post(
         `https://graph.facebook.com/v19.0/${WHATSAPP_PHONE_ID}/messages`,
@@ -68,4 +66,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   return res.status(405).send("Método não permitido");
-}
+};
