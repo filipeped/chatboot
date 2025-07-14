@@ -5,5 +5,11 @@
       "src": "api/whatsapp.ts",
       "use": "@vercel/node"
     }
+  ],
+  "routes": [
+    {
+      "src": "/api/whatsapp",
+      "dest": "/api/whatsapp.ts"
+    }
   ]
 }
