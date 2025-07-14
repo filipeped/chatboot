@@ -1,4 +1,4 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 
 const GPT_MODEL = "gpt-3.5-turbo";
@@ -12,6 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
+
     if (mode === "subscribe" && token === VERIFY_TOKEN) {
       return res.status(200).send(challenge);
     } else {
@@ -24,6 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
       const sender = message?.from;
       const text = message?.text?.body;
+
       if (!sender || !text) return res.sendStatus(200);
 
       const gpt = await axios.post(
@@ -40,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       );
 
-      const resposta = gpt.data.choices?.[0]?.message?.content;
+      const resposta = gpt.data.choices?.[0]?.message?.content || "Desculpe, não entendi.";
 
       await axios.post(
         `https://graph.facebook.com/v19.0/${WHATSAPP_PHONE_ID}/messages`,
