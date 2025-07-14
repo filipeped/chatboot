@@ -1,16 +1,21 @@
+// Local: api/whatsapp.ts
+// ATENÇÃO: ESTE CÓDIGO CONTÉM CHAVES SECRETAS. NÃO É SEGURO.
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import axios from 'axios';
 
-// As chaves de API são lidas das Variáveis de Ambiente da Vercel
+// ===================================================================
+// SUAS CHAVES ESTÃO AQUI. QUALQUER UM PODE VÊ-LAS E USÁ-LAS.
 const GPT_MODEL = "gpt-3.5-turbo";
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
-const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID;
-const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
+const OPENAI_API_KEY = "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"; // SUA NOVA CHAVE DA OPENAI
+const WHATSAPP_TOKEN = "EAAJmzvNnx3gBAA1ny8WaAbzZA5ZBozDmmrxXJAhFMKllyM8ZCGsD6XcqUZAHq4XxAZAlqwRE6gmH0FM5AwIvEwrMjblwl0epTfL4oZCgCOHKFGYkUEiT83vQlGZAfq0RcfqUHaBrNPbZCF78PYFv9rrD7zJPBLah5G1bykl9HfNdOtvn7XoUgsY1Qyn60eQgtdcZD"; // SEU TOKEN DO WHATSAPP
+const WHATSAPP_PHONE_ID = "716952258170209";
+const VERIFY_TOKEN = "digital";
+// ===================================================================
 
-// A função principal que a Vercel irá executar
+
 export default async (req: VercelRequest, res: VercelResponse) => {
-  // 1. Configuração do Webhook do WhatsApp (só acontece uma vez)
+  // 1. Configuração do Webhook do WhatsApp
   if (req.method === "GET") {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
@@ -20,25 +25,25 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       console.log("Webhook verificado com sucesso!");
       return res.status(200).send(challenge);
     } else {
-      console.error("Falha na verificação do webhook. Tokens não correspondem.");
+      console.error("Falha na verificação do webhook.");
       return res.status(403).send("Token de verificação inválido");
     }
   }
 
-  // 2. Recebendo e respondendo mensagens (acontece a cada mensagem recebida)
+  // 2. Recebendo e respondendo mensagens
   if (req.method === "POST") {
     try {
       const message = req.body.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
       
       if (!message) {
-        return res.status(200).send('OK'); // Não é uma mensagem, apenas um status do WhatsApp
+        return res.status(200).send('OK');
       }
 
       const sender = message.from;
       const text = message.text?.body;
 
       if (!sender || !text) {
-        return res.status(200).send('OK'); // Ignora se não houver texto
+        return res.status(200).send('OK');
       }
 
       // 3. Chamada para a API da OpenAI
@@ -54,7 +59,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             Authorization: `Bearer ${OPENAI_API_KEY}`,
           },
         }
-       );
+        );
 
       const resposta = gptResponse.data.choices?.[0]?.message?.content;
 
@@ -78,7 +83,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
             Authorization: `Bearer ${WHATSAPP_TOKEN}`,
           },
         }
-       );
+        );
 
       return res.status(200).send('OK');
     } catch (e: any) {
